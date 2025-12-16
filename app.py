@@ -1,32 +1,14 @@
 import streamlit as st
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import nltk
+from resume_parser import extract_text
+from keyword_matcher import calculate_match
 
-nltk.download('punkt')
+st.title("AI Resume Analyzer")
 
-def analyze_resume(resume_text, job_description):
-    vectorizer = CountVectorizer().fit_transform([resume_text, job_description])
-    similarity = cosine_similarity(vectorizer)[0][1]
-    return round(similarity * 100, 2)
+uploaded_file = st.file_uploader("Upload Resume (PDF or DOCX)", type=["pdf", "docx"])
+job_keywords_input = st.text_area("Enter Job Keywords (comma-separated)")
 
-st.set_page_config(page_title="AI Resume Analyzer", page_icon="🧠")
-st.title("🧠 AI Resume Analyzer")
-
-st.markdown("Compare your resume with a job description and get a match score using NLP.")
-
-resume_input = st.text_area("📄 Paste your resume text here")
-job_input = st.text_area("📝 Paste the job description here")
-
-if st.button("🔍 Analyze"):
-    if resume_input and job_input:
-        score = analyze_resume(resume_input, job_input)
-        st.success(f"✅ Match Score: {score}%")
-        if score > 75:
-            st.info("Great match! Your resume aligns well with the job description.")
-        elif score > 50:
-            st.warning("Decent match. Consider tailoring your resume more closely.")
-        else:
-            st.error("Low match. Try revising your resume to better reflect the job requirements.")
-    else:
-        st.warning("Please enter both resume and job description.")
+if uploaded_file and job_keywords_input:
+    resume_text = extract_text(uploaded_file)
+    job_keywords = [k.strip() for k in job_keywords_input.split(',')]
+    score = calculate_match(resume_text, job_keywords)
+    st.success(f"Resume Match Score: {score}%")
